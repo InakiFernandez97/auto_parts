@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ producto.nombre }} - Autoparts Empresas</title>
+    <link rel="stylesheet" href="{% static 'css/detalle_producto_empresa.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="logo">AUTOPARTS Mayoristas</div>
+        <div class="topbar-buttons">
+            <a href="{% url 'catalogo_empresa' %}" class="topbar-btn">Volver al catálogo</a>
+            <a href="{% url 'logout_mayorista' %}" class="topbar-btn">Cerrar sesión</a>
+        </div>
+    </header>
+
+    <main class="detalle-container">
+        <div class="zoom-container">
+            <img id="zoom-img" src="{% static 'img/'|add:producto.imagen %}" alt="{{ producto.nombre }}">
+        </div>
+
+        <div class="detalle-info">
+            <h1>{{ producto.nombre }}</h1>
+            <p class="categoria">Categoría: {{ producto.categoria }}</p>
+            <p class="stock">Stock disponible: {{ producto.stock }}</p>
+
+            <p class="precio-original" style="text-decoration: line-through;">Precio público: ${{ precio_original }}</p>
+            <p class="precio-descuento"><strong>Precio empresa (IVA incluido): ${{ precio_empresa }}</strong></p>
+
+            <form method="POST" action="{% url 'agregar_al_carrito_empresa' %}">
+                {% csrf_token %}
+                <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                
+                <label for="cantidad">Cantidad:</label>
+                <input type="number" id="cantidad" name="cantidad" value="1" min="1" max="10" required class="input-cantidad">
+
+                <div class="boton-container">
+                    <button class="carro" type="submit">Agregar al carro</button>
+                </div>
+
+            </form>
+        </div>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/easyzoom/2.5.0/easyzoom.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var $easyzoom = $('.easyzoom').easyZoom();
+        });
+    </script>
+    <script>
+    const zoomImage = document.getElementById('zoom-image');
+    const zoomLens = document.getElementById('zoom-lens');
+
+    zoomImage.addEventListener('mousemove', function(e) {
+        const bounds = zoomImage.getBoundingClientRect();
+        const x = e.clientX - bounds.left;
+        const y = e.clientY - bounds.top;
+
+        zoomLens.style.left = x - zoomLens.offsetWidth / 2 + 'px';
+        zoomLens.style.top = y - zoomLens.offsetHeight / 2 + 'px';
+        zoomLens.style.backgroundImage = `url('${zoomImage.src}')`;
+        zoomLens.style.backgroundSize = `${zoomImage.width * 2}px ${zoomImage.height * 2}px`;
+        zoomLens.style.backgroundPosition = `-${x * 2}px -${y * 2}px`;
+        zoomLens.style.display = 'block';
+    });
+
+    zoomImage.addEventListener('mouseleave', function() {
+        zoomLens.style.display = 'none';
+    });
+</script>
+</body>
+</html>

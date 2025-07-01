@@ -1,0 +1,301 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Catálogo - Autoparts</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"  integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/stilo.css' %}">
+
+</head>
+<body>
+{% include 'tienda/base/header.html' %}
+
+
+<div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <img src='{% static "img/6.png" %}' class="d-block w-100" width="700px" height="700px"  >
+          </div>
+          <div class="carousel-item">
+            <img src='{% static "img/5.png" %}' class="d-block  w-100" width="700px" height="700px" >
+          </div>
+          <div class="carousel-item">
+            <img src='{% static "img/7.png" %}' class="d-block w-100 " width="700px" height="700px" >
+          </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+
+
+
+<section class="mas-vendidos">
+<h2 class="text-center mt-5 mb-4">🔥 Productos Destacados</h2>
+  <div class="carrusel position-relative">
+    <button class="carrusel-btn left" onclick="moverCarrusel(-1)">&#10094;</button>
+    <div id="carruselDestacados" class="carrusel-items">
+      {% for producto in productos_destacados %}
+      <form method="POST" action="{% url 'agregar_al_carrito' %}">
+        {% csrf_token %}
+        <div class="product-card">
+          <a href="{% url 'detalle_producto' producto.id %}" class="product-card-link">
+            <img src="{% static 'img/'|add:producto.imagen %}" alt="{{ producto.nombre }}">
+            <h3>{{ producto.nombre }}</h3>
+          </a>
+          <p>${{ producto.precio }}</p>
+          <input type="hidden" name="producto_id" value="{{ producto.id }}">
+          <input type="hidden" name="cantidad" value="1">
+          <button type="submit" class="btn-agregar">Agregar al carro</button>
+        </div>
+      </form>
+      {% endfor %}
+    </div>
+    <button class="carrusel-btn right" onclick="moverCarrusel(1)">&#10095;</button>
+  </div>
+</section>
+
+<section class="promociones">
+    <h2>🎯 Promociones</h2>
+    <div class="promo-cards">
+        <div class="promo-card">
+            <img src="{% static 'img/freno.jpg' %}" alt="Promo 1">
+            <h3>20% OFF Frenos Valeo </h3>
+            <p>Solo por esta semana</p>
+        </div>
+        <div class="promo-card">
+            <img src="{% static 'img/kit.jpg' %}" alt="Promo 2">
+            <h3>Kit Aceite + Filtro</h3>
+            <p>Aprovecha desde $14.990</p>
+        </div>
+        <div class="promo-card">
+            <img src="{% static 'img/correa.jpg' %}" alt="Promo 3">
+            <h3>Correa </h3>
+            <p>Hasta 30% de descuento</p>
+        </div>
+    </div>
+</section>
+
+
+
+<section class="categorias-repuestos">
+  <h2>🧰 Repuestos por Categoría</h2>
+  <div class="categoria-grid">
+    
+    <a href="{% url 'categoria' 'Frenos' %}" class="categoria-card">
+      <img src="{% static 'img/frenooo.png' %}" alt="Frenos">
+      <h3>Frenos</h3>
+    </a>
+
+    <a href="{% url 'categoria' 'Aceite' %}" class="categoria-card">
+      <img src="{% static 'img/aceite.jpg' %}" alt="Aceite">
+      <h3>Aceite</h3>
+    </a>
+
+    <a href="{% url 'categoria' 'Iluminación' %}" class="categoria-card">
+      <img src="{% static 'img/lucee.png' %}" alt="Iluminación">
+      <h3>Iluminación</h3>
+    </a>
+
+    <a href="{% url 'categoria' 'Baterías' %}" class="categoria-card">
+      <img src="{% static 'img/bateria.png' %}" alt="Baterías">
+      <h3>Baterías</h3>
+    </a>
+
+    <a href="{% url 'categoria' 'Accesorios' %}" class="categoria-card">
+      <img src="{% static 'img/accesoroi.png' %}" alt="Accesorios">
+      <h3>Accesorios</h3>
+    </a>
+
+  </div>
+</section>
+
+
+
+<!-- MODAL LOGIN -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal()">&times;</span>
+        <h2>¡Nos alegra que hayas regresado!</h2>
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <label for="correo">Correo</label>
+            <input type="email" name="correo" placeholder="usuario@autoparts.cl" required>
+
+            <label for="contrasena">Contraseña</label>
+            <input type="password" name="contrasena" required>
+
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+
+            <button type="submit" class="btn-login">Iniciar Sesión</button>
+            <a href="#" class="forgot">Olvidé mi contraseña</a>
+            <p class="login-text">¿No tienes una cuenta? <a href="{% url 'registro' %}">Créala aquí</a></p>
+        </form>
+    </div>
+</div>
+
+<section class="beneficios-section ">
+    
+  <h2>¿Por qué elegir Autoparts?</h2>
+
+  <div class="beneficios-grid-horizontal">
+    <div class="beneficio-card dark-card">
+      <i class="fas fa-shield-alt"></i>
+      <h3>Pago Seguro</h3>
+      <p>Transacciones protegidas con métodos de pago certificados.</p>
+    </div>
+    <div class="beneficio-card dark-card">
+      <i class="fas fa-store"></i>
+      <h3>Retiro en Tienda</h3>
+      <p>Compra online y retira en tienda en solo 1 hora.</p>
+    </div>
+    <div class="beneficio-card dark-card">
+      <i class="fas fa-check-circle"></i>
+      <h3>Repuestos Garantizados</h3>
+      <p>Todos nuestros productos están garantizados por ley.</p>
+    </div>
+    <div class="beneficio-card dark-card">
+      <i class="fas fa-truck"></i>
+      <h3>Despachos a Todo Chile</h3>
+      <p>Envíos en 24h con múltiples opciones de entrega.</p>
+    </div>
+  </div>
+</section>
+
+
+{% include 'tienda/base/footer.html' %}
+
+
+<script>
+    let total = 0;
+    let count = 0;
+
+    function addToCart(price) {
+        total += price;
+        count += 1;
+        document.getElementById("total").innerText = total;
+        document.getElementById("cart-count").innerText = count;
+    }
+
+
+    // Modal Login
+    function abrirModal() {
+        document.getElementById("loginModal").style.display = "block";
+    }
+
+    function cerrarModal() {
+        document.getElementById("loginModal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        let modal = document.getElementById("loginModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+   <script>
+      window.addEventListener('DOMContentLoaded', () => {
+     if (localStorage.getItem('abrirModal') === 'true') {
+      document.querySelector('.dropbtn').click(); // Simula click en botón de login
+      localStorage.removeItem('abrirModal');
+     }
+      });
+   </script>
+   <script>
+  function toggleMenu() {
+    const menu = document.getElementById("sideMenu");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  }
+
+  // Cerrar el menú si se hace clic fuera
+  window.onclick = function(e) {
+    const menu = document.getElementById("sideMenu");
+    if (!e.target.closest('.menu-toggle') && !e.target.closest('#sideMenu')) {
+      menu.style.display = "none";
+    }
+  };
+</script>
+<script>
+  function scrollCarrusel(id, direccion) {
+      const carrusel = document.querySelector(`#${id} .carrusel-items`);
+      const width = carrusel.clientWidth;
+      carrusel.scrollLeft += direccion * (width / 1.2);
+  }
+
+  function addToCart(price) {
+      let total = parseInt(localStorage.getItem("cartTotal") || "0");
+      let count = parseInt(localStorage.getItem("cartCount") || "0");
+
+      total += price;
+      count += 1;
+
+      localStorage.setItem("cartTotal", total);
+      localStorage.setItem("cartCount", count);
+
+      document.getElementById("cart-count").innerText = count;
+  }
+  
+</script>
+
+<script>
+function scrollCarrusel(id, direccion) {
+  const carrusel = document.getElementById(id);
+  const items = carrusel.querySelectorAll(".product-card-link");
+  const itemWidth = items[0].offsetWidth + 20; // ancho + gap
+  const scrollAmount = itemWidth * 2; // ajusta la cantidad a desplazar
+
+  if (direccion === 1) {
+    carrusel.scrollBy({ left: scrollAmount, behavior: "smooth" });
+
+    // Si estamos muy cerca del final, vuelve al inicio
+    setTimeout(() => {
+      if (carrusel.scrollLeft + carrusel.offsetWidth >= carrusel.scrollWidth - 5) {
+        carrusel.scrollTo({ left: 0, behavior: "smooth" });
+      }
+    }, 500);
+
+  } else if (direccion === -1) {
+    carrusel.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+
+    // Si estamos al inicio, salta al final
+    setTimeout(() => {
+      if (carrusel.scrollLeft <= 0) {
+        carrusel.scrollTo({ left: carrusel.scrollWidth, behavior: "smooth" });
+      }
+    }, 500);
+  }
+}
+</script>
+
+<script>
+  function moverCarrusel(direccion) {
+    const contenedor = document.getElementById('carruselDestacados');
+    const cardWidth = contenedor.querySelector('.product-card').offsetWidth + 20; // ancho + gap
+    contenedor.scrollBy({
+      left: direccion * cardWidth,
+      behavior: 'smooth'
+    });
+  }
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+
+
+</body>
+</html>

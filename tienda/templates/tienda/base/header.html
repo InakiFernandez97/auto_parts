@@ -1,0 +1,82 @@
+<header>
+    <div class="topbar">
+        <div class="logo">AUTOPARTS</div>
+
+        <!-- Buscador -->
+        <div class="search-container">
+            <form method="get" action="{% url 'catalogo_b2c' %}">
+                <input type="text" name="q" placeholder="¿Qué buscas hoy?" value="{{ query }}">
+                <button type="submit" class="search-btn">🔍</button>
+            </form>
+        </div>
+
+        <div class="user-cart">
+            <!-- Saludo si el usuario está logueado -->
+            {% if request.session.usuario_nombre %}
+                <div class="saludo" style="color: white; margin-right: 15px;">
+                    Bienvenido, {{ request.session.usuario_nombre }}
+                </div>
+            {% endif %}
+
+            <!-- Dropdown de sesión -->
+            {% if request.session.usuario_nombre %}
+                <div class="dropdown">
+                    <button class="dropbtn">👤 {{ request.session.usuario_nombre }}</button>
+                    <div class="dropdown-content">
+                        <a href="{% url 'perfil_cliente' %}">Ver perfil</a>
+                        <a href="{% url 'logout' %}">Cerrar sesión</a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="dropdown">
+                    <button class="dropbtn">Iniciar sesión</button>
+                    <div class="dropdown-content">
+                        <a href="{% url 'logincliente' %}">Cliente</a>
+                        <a href="{% url 'loginmayorista' %}">Mayorista</a>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Carrito -->
+            <a href="{% url 'carrito_cliente' %}" class="cart">
+                🛒 <span id="cart-count">{{ request.session.carrito_b2c|length|default:"0" }}</span>
+            </a>
+
+            <!-- Botón de menú lateral de Categorías -->
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i> Categorías
+            </div>
+
+            <!-- Botón de menú lateral de Marcas -->
+            <div class="menu-toggle" onclick="toggleMenuMarcas()">
+                <i class="fas fa-tags"></i> Marcas
+            </div>
+
+            <!-- Menú lateral de Categorías -->
+            <div class="side-menu" id="sideMenu">
+                <ul>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Accesorios"><i class="fas fa-box-open"></i> Accesorios</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Neumáticos"><i class="fas fa-dot-circle"></i> Neumáticos</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Herramientas"><i class="fas fa-tools"></i> Herramientas</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Eléctrico"><i class="fas fa-car-battery"></i> Baterías</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Limpieza"><i class="fas fa-pump-soap"></i> Limpieza y Cuidado</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Lubricantes"><i class="fas fa-oil-can"></i> Lubricantes</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Filtros"><i class="fas fa-filter"></i> Filtros de Aceite y de Aire</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Encendido"><i class="fas fa-bolt"></i> Bujías</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Correas"><i class="fas fa-sync-alt"></i> Correas</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Iluminacion"><i class="fas fa-lightbulb"></i> Iluminación y Electricidad</a></li>
+                    <li><a href="{% url 'catalogo_b2c' %}?categoria=Frenos"><i class="fas fa-car-crash"></i> Frenos y Suspensión</a></li>
+                </ul>
+            </div>
+
+            <!-- Menú lateral de Marcas -->
+            <div class="side-menu" id="menuMarcas">
+                <ul>
+                    {% for marca in marcas %}
+                        <li><a href="{% url 'catalogo_b2c' %}?marca={{ marca }}">{{ marca }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>

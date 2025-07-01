@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Catálogo - B2C</title>
+    <link rel="stylesheet" href="{% static 'css/catalogo_b2c.css' %}">
+</head>
+<body>
+<header class="topbar">
+    <div class="logo">AUTOPARTS</div>
+    <div class="search-container">
+        <form method="get">
+            <input type="text" name="q" placeholder="Buscar productos..." value="{{ query }}">
+            <button type="submit" class="search-btn">🔍</button>
+        </form>
+    </div>
+</header>
+
+<main class="catalogo-container">
+    <a href="{% url 'home' %}" class="volver-btn">← Volver</a>
+    <h2>Catálogo de Productos</h2>
+
+    <div class="catalog-layout">
+        <!-- FILTROS LATERALES -->
+        <div class="filters">
+            <form method="get">
+                <h4>Categoría</h4>
+                <select name="categoria">
+                    <option value="">Todas</option>
+                    {% for c in categorias %}
+                        <option value="{{ c }}" {% if c == categoria_seleccionada %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+
+                <h4>Marcas</h4>
+                {% for marca in marcas %}
+                    <label>
+                        <input type="checkbox" name="marca" value="{{ marca }}"
+                            {% if marca in marcas_seleccionadas %}checked{% endif %}>
+                        {{ marca }}
+                    </label>
+                {% endfor %}
+
+
+                <div style="margin-top: 10px;">
+                    <button type="submit" class="filtrar-btn">Filtrar</button>
+                    <a href="{% url 'catalogo_b2c' %}" class="limpiar-btn">Limpiar filtros</a>
+
+                </div>
+            </form>
+        </div>
+
+        <!-- PRODUCTOS -->
+        <div class="product-list">
+            {% for producto in productos %}
+                <div class="product-card">
+                    <img src="{% static 'img/'|add:producto.imagen %}" alt="{{ producto.nombre }}">
+                    <h3>{{ producto.nombre }}</h3>
+                    <p>${{ producto.precio }}</p>
+                    <form method="post" action="{% url 'agregar_al_carrito' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                        <input type="hidden" name="cantidad" value="1">
+                        <button type="submit">Agregar al carrito</button>
+                    </form>
+                </div>
+            {% empty %}
+                <p>No hay productos disponibles.</p>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+</body>
+</html>

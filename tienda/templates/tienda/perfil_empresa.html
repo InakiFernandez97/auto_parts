@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Perfil de Empresa - Autoparts</title>
+    <link rel="stylesheet" href="{% static 'css/stilo.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="logo">AUTOPARTS</div>
+        <a href="{% url 'homemayorista' %}" class="topbar-btn">Volver al panel</a>
+    </header>
+
+    <main style="max-width: 600px; margin: 40px auto;">
+        <h2>Perfil de la Empresa</h2>
+        <ul style="list-style: none; padding: 0;">
+            <li><strong>Nombre:</strong> {{ empresa.nombre_empresa }}</li>
+            <li><strong>RUT:</strong> {{ empresa.rut_empresa }}</li>
+            <li><strong>Dirección:</strong> {{ empresa.direccion }}</li>
+            <li><strong>Teléfono:</strong> {{ empresa.telefono }}</li>
+            <li><strong>Correo:</strong> {{ empresa.correo_empresa }}</li>
+        </ul>
+    </main>
+</body>
+</html>

@@ -1,0 +1,143 @@
+/* Fuente base y layout */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.topbar {
+    background-color: #212529;
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar .logo {
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.topbar-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.topbar-btn {
+    color: white;
+    text-decoration: none;
+    border: 1px solid #fff;
+    padding: 6px 12px;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+.topbar-btn:hover {
+    background-color: #fff;
+    color: #212529;
+}
+
+.detalle-container {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    padding: 40px;
+    flex-wrap: wrap;
+    background-color: #fff;
+}
+
+/* Imagen con zoom */
+.zoom-container {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 400px;
+    height: 400px;
+    cursor: zoom-in;
+    transition: all 0.3s ease;
+}
+
+.zoom-container.zoomed {
+    cursor: zoom-out;
+}
+
+.zoom-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.zoom-container.zoomed img {
+    transform: scale(2);
+}
+
+/* Información del producto */
+.detalle-info {
+    max-width: 450px;
+}
+
+.detalle-info h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+    color: #222;
+}
+
+.detalle-info p {
+    font-size: 16px;
+    margin: 8px 0;
+}
+
+.precio-original {
+    color: #888;
+}
+
+.precio-descuento {
+    color: #e53935;
+    font-size: 22px;
+}
+
+/* Estilo para el input de cantidad */
+input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+    max-width: 100px;
+}
+
+/* Botón Agregar al carro estilo negro */
+.carro {
+    background-color: #000;
+    color: #fff;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 200px;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.carro:hover {
+    background-color: #333;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Ajuste para el contenedor del formulario */
+.detalle-info form {
+    margin-top: 20px;
+}

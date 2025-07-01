@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #000; padding: 5px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        h2, h4 { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+
+    <h2>Autoparts - Cotización #{{ cotizacion.id }}</h2>
+    <p><strong>Fecha:</strong> {{ cotizacion.fecha|date:"d/m/Y H:i" }}</p>
+    <p><strong>Empresa:</strong> {{ cotizacion.cliente.nombre_empresa }}</p>
+    <p><strong>RUT:</strong> {{ cotizacion.cliente.rut_empresa }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in detalles %}
+            <tr>
+                <td>{{ d.producto }}</td>
+                <td>{{ d.cantidad }}</td>
+                <td>${{ d.precio_unitario|floatformat:0 }}</td>
+                <td>${{ d.subtotal|floatformat:0 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4 style="text-align: right; margin-top: 20px;">Total: ${{ cotizacion.total|floatformat:0 }}</h4>
+
+</body>
+</html>

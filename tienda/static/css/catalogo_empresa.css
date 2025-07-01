@@ -1,0 +1,46 @@
+
+.filtro-box {
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.carousel-inner img {
+    max-height: 100px;
+    object-fit: contain;
+}
+
+.form-check-input, .form-check-label {
+    cursor: pointer;
+}
+
+.btn-sm {
+    width: 100%;
+}
+  
+.card-img-top.img-producto {
+  height: 180px;
+  object-fit: contain;
+}
+
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.btn-dark {
+  background-color: #000;
+  color: #fff;
+  border: none;
+}
+
+.btn-dark:hover {
+  background-color: #222;
+}

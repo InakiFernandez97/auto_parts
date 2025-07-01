@@ -1,0 +1,31 @@
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white text-center">
+          <h3>Redirigiendo a Webpay</h3>
+        </div>
+        <div class="card-body text-center">
+          <p>Estás siendo redirigido a la página de pago de Webpay...</p>
+          <p>No cierres esta ventana.</p>
+
+          <form id="webpayForm" action="{{ webpay_url }}" method="POST">
+            <input type="hidden" name="token_ws" value="{{ token }}">
+          </form>
+
+          <div class="spinner-border text-primary mt-3" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Enviar el formulario automáticamente al cargar la página
+  document.getElementById('webpayForm').submit();
+</script>
+{% endblock %}

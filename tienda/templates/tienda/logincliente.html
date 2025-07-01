@@ -1,0 +1,32 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Cliente</title>
+    <link rel="stylesheet" href="{% static 'css/stilo.css' %}">
+</head>
+<body class="registro-body">
+    <div class="registro-container">
+        <div class="registro-card">
+            <div class="icono-user">
+                <i class="fas fa-user"></i>
+            </div>
+            <h2 class="registro-titulo">Iniciar Sesión</h2>
+            <form method="POST" action="{% url 'logincliente' %}">
+                {% csrf_token %}
+                <input type="email" name="correo" placeholder="Correo electrónico" required>
+                <input type="password" name="contrasena" placeholder="Contraseña" required>
+
+                {% if error %}
+                    <p class="error">{{ error }}</p>
+                {% endif %}
+
+                <button type="submit">Ingresar</button>
+            </form>
+            <p class="registro-login">¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a></p>
+        </div>
+    </div>
+</body>
+</html>

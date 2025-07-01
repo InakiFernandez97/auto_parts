@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Carrito de Compras</title>
+    <link rel="stylesheet" href="{% static 'css/carrito.css' %}">
+</head>
+<body>
+    <h1>Tu carrito</h1>
+    {% if items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.producto.nombre }}</td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>${{ item.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p><strong>Total a pagar: ${{ total }}</strong></p>
+
+        <form method="post" action="{% url 'iniciar_pago_webpay' %}">
+            {% csrf_token %}
+        <button class="btn btn-success w-100">Pagar y Generar Boleta</button>
+        </form>
+
+    {% else %}
+        <p>Tu carrito está vacío.</p>
+    {% endif %}
+</body>
+</html>

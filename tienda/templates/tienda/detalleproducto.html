@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ producto.nombre }}</title>
+    <link rel="stylesheet" href="{% static 'css/detalleproducto.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="topbar">
+            <div class="logo">AUTOPARTS</div>
+            <div class="topbar-buttons">
+                <a href="{% url 'home' %}" class="topbar-btn">Volver</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="detalle-container">
+        <div class="detalle-imagen">
+            <div class="zoom-container">
+                <img src="{% static 'img/'|add:producto.imagen %}" alt="{{ producto.nombre }}" id="zoom-image">
+                <div id="zoom-lens"></div>
+            </div>
+        </div>
+
+        <div class="detalle-info">
+            <h1>{{ producto.nombre }}</h1>
+            <p><strong>Marca:</strong> {{ producto.marca }}</p>
+            <p><strong>Categoría:</strong> {{ producto.categoria }}</p>
+            <p><strong>Precio:</strong> ${{ producto.precio }}</p>
+            <p class="descripcion">{{ producto.descripcion }}</p>
+
+            <form method="post" action="{% url 'agregar_al_carrito' %}">
+                {% csrf_token %}
+                <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                <input type="number" name="cantidad" value="1" min="1" class="form-control mb-2" style="width: 100px;">
+                <button type="submit" class="btn btn-warning w-100">Agregar al carro</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const zoomImage = document.getElementById('zoom-image');
+        const zoomLens = document.getElementById('zoom-lens');
+
+        zoomImage.addEventListener('mousemove', function(e) {
+            const bounds = zoomImage.getBoundingClientRect();
+            const x = e.clientX - bounds.left;
+            const y = e.clientY - bounds.top;
+
+            zoomLens.style.left = x - zoomLens.offsetWidth / 2 + 'px';
+            zoomLens.style.top = y - zoomLens.offsetHeight / 2 + 'px';
+            zoomLens.style.backgroundImage = `url('${zoomImage.src}')`;
+            zoomLens.style.backgroundSize = `${zoomImage.width * 2}px ${zoomImage.height * 2}px`;
+            zoomLens.style.backgroundPosition = `-${x * 2}px -${y * 2}px`;
+            zoomLens.style.display = 'block';
+        });
+
+        zoomImage.addEventListener('mouseleave', function() {
+            zoomLens.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

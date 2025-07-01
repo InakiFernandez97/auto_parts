@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ categoria }} - Autoparts</title>
+    <link rel="stylesheet" href="{% static 'categoria.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="logo">AUTOPARTS</div>
+        <a href="{% url 'home' %}" class="topbar-btn">Volver al inicio</a>
+    </header>
+
+    <main>
+        <h2>Productos de {{ categoria }}</h2>
+        <div class="categoria-grid">
+            {% for producto in productos %}
+                <div class="producto-card">
+                    <img src="{% static producto.imagen %}" alt="{{ producto.nombre }}">
+                    <h3>{{ producto.nombre }}</h3>
+                    <p>${{ producto.precio }}</p>
+                    <button onclick="addToCart({{ producto.precio }})">Agregar al carro</button>
+                </div>
+            {% empty %}
+                <p>No hay productos disponibles en esta categoría.</p>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>

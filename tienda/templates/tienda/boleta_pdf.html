@@ -1,0 +1,27 @@
+
+<h2 style="text-align: center;">Boleta de Compra #{{ compra.id }}</h2>
+<p><strong>Cliente:</strong> {{ compra.cliente.nombre }}</p>
+<p><strong>Fecha:</strong> {{ compra.fecha|date:"d/m/Y H:i" }}</p>
+
+<table width="100%" border="1" cellspacing="0" cellpadding="5">
+    <thead style="background-color: #f0f0f0;">
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in detalles %}
+        <tr>
+            <td>{{ item.producto.nombre }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>${{ item.precio_unitario }}</td>
+            <td>${{ item.subtotal }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3 style="text-align: right;">Total: ${{ compra.total }}</h3>

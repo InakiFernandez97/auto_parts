@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Panel Mayorista - Autoparts</title>
+    <link rel="stylesheet" href="{% static 'css/stilo.css' %}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <header>
+      <div class="topbar">
+        <div class="logo">AUTOPARTS</div>
+        <div class="topbar-buttons">
+          {% if request.session.mayorista_nombre %}
+          <div class="saludo" style="color: white">
+            Bienvenido, {{ request.session.mayorista_nombre }}
+          </div>
+          {% endif %}
+          <a href="{% url 'logout_mayorista' %}" class="topbar-btn"
+            >Cerrar sesión</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <main style="max-width: 1200px; margin: 40px auto; padding: 20px">
+      <h2 style="margin-bottom: 30px">Panel de Comprador Mayorista</h2>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 25px;
+        "
+      >
+        <div class="card-dashboard">
+          <i class="fas fa-box fa-2x"></i>
+          <h3>Ver Catálogo Mayorista</h3>
+          <p>Accede a todos los productos con precios mayoristas exclusivos.</p>
+          <a href="{% url 'catalogo_empresa' %}" class="btn-dashboard"
+            >Ver Catalogo</a
+          >
+        </div>
+
+        <div class="card-dashboard">
+          <i class="fas fa-file-invoice-dollar fa-2x"></i>
+          <h3>Mis Cotizaciones</h3>
+          <p>Consulta cotizaciones realizadas y estado de aprobación.</p>
+          <a href="{% url 'mis_cotizaciones_empresa' %}" class="btn-dashboard"
+            >Ver Cotizaciones</a
+          >
+        </div>
+
+        <div class="card-dashboard">
+          <i class="fas fa-truck fa-2x"></i>
+          <h3>Seguimiento de Pedidos</h3>
+          <p>Haz seguimiento a tus órdenes y despacho.</p>
+          <a href="#" class="btn-dashboard">Seguimiento</a>
+        </div>
+
+        <div class="card-dashboard">
+          <i class="fas fa-user-cog fa-2x"></i>
+          <h3>Mi Cuenta</h3>
+          <p>Edita los datos de tu empresa y contacto.</p>
+          <a href="{% url 'perfil_empresa' %}" class="btn-dashboard"
+            >Ver Perfil</a
+          >
+        </div>
+      </div>
+    </main>
+    
+    {% include 'tienda/base/footer.html' %}
+    
+  </body>
+</html>
