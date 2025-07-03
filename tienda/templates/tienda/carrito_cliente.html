@@ -4,38 +4,147 @@
 <head>
     <meta charset="UTF-8">
     <title>Carrito de Compras</title>
-    <link rel="stylesheet" href="{% static 'css/carrito.css' %}">
+    <link rel="stylesheet" href="{% static 'css/debug.css' %}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
 <body>
-    <h1>Tu carrito</h1>
-    {% if items %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td>{{ item.producto.nombre }}</td>
-                    <td>{{ item.cantidad }}</td>
-                    <td>${{ item.subtotal }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <p><strong>Total a pagar: ${{ total }}</strong></p>
 
-        <form method="post" action="{% url 'iniciar_pago_webpay' %}">
-            {% csrf_token %}
-        <button class="btn btn-success w-100">Pagar y Generar Boleta</button>
-        </form>
+<h1>Tu carrito</h1>
 
-    {% else %}
-        <p>Tu carrito está vacío.</p>
-    {% endif %}
+{% if items %}
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.producto.nombre }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>${{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><strong>Total productos: ${{ total }}</strong></p>
+    <p id="costoEnvioTexto" style="font-weight: bold;"></p>
+    <p id="totalFinalTexto" style="font-weight: bold;"></p>
+
+    <form method="post" action="{% url 'iniciar_pago_webpay' %}" id="formulario_pago">
+        {% csrf_token %}
+
+        <label><strong>¿Deseas envío a domicilio?</strong></label><br>
+        <input type="radio" name="requiere_envio" value="si" id="envio_si" required>
+        <label for="envio_si">Sí</label>
+        <input type="radio" name="requiere_envio" value="no" id="envio_no">
+        <label for="envio_no">No</label>
+
+        <div id="campos_envio" style="display: none; margin-top: 1em;">
+            <div class="form-group mt-2">
+                <label><strong>Comuna:</strong></label>
+                <select name="comuna" id="comuna" class="form-select">
+                    <option value="">-- Selecciona comuna --</option>
+                    {% for c in comunas %}
+                        <option value="{{ c.countyCode }}">{{ c.countyName }} ({{ c.regionName }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group mt-2">
+                <label for="direccion"><strong>Dirección exacta:</strong></label>
+                <input type="text" name="direccion" id="direccion" class="form-control">
+            </div>
+
+            <button type="button" id="btnCalcularEnvio" class="btn btn-primary mt-3">Calcular envío</button>
+        </div>
+
+        <button class="btn btn-success w-100 mt-4" id="btnPagar" disabled>Pagar y Generar Boleta</button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const radios = document.getElementsByName('requiere_envio');
+            const camposEnvio = document.getElementById('campos_envio');
+            const btnCalcular = document.getElementById('btnCalcularEnvio');
+            const btnPagar = document.getElementById('btnPagar');
+            const costoEnvioTexto = document.getElementById('costoEnvioTexto');
+            const totalFinalTexto = document.getElementById('totalFinalTexto');
+            const comunaSelect = document.getElementById('comuna');
+            const direccionInput = document.getElementById('direccion');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const totalProductos = {{ total|default:0 }};
+
+            radios.forEach(radio => {
+                radio.addEventListener('change', function () {
+                    const requiereEnvio = this.value === 'si';
+                    camposEnvio.style.display = requiereEnvio ? 'block' : 'none';
+                    btnPagar.disabled = requiereEnvio;  // deshabilitar si requiere envío
+                    costoEnvioTexto.textContent = '';
+                    totalFinalTexto.textContent = '';
+                });
+            });
+
+            btnCalcular.addEventListener('click', function () {
+                const comuna = comunaSelect.value;
+                const direccion = direccionInput.value.trim();
+
+                if (!comuna || direccion.length === 0) {
+                    alert("Debes seleccionar una comuna y escribir la dirección.");
+                    return;
+                }
+
+                btnPagar.disabled = true;
+                costoEnvioTexto.textContent = 'Calculando envío...';
+
+                fetch('/api/costo-envio/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ comuna: comuna })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error("Respuesta no válida");
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.costo_envio !== undefined) {
+                        const costo = data.costo_envio;
+                        const totalFinal = totalProductos + costo;
+
+                        costoEnvioTexto.textContent = `Costo de envío estimado: $${costo}`;
+                        totalFinalTexto.textContent = `Total con envío: $${totalFinal}`;
+
+                        btnPagar.disabled = false;
+                    } else {
+                        costoEnvioTexto.textContent = 'No se pudo calcular el envío.';
+                        btnPagar.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Error en fetch:", error);
+                    costoEnvioTexto.textContent = 'Error al consultar el envío.';
+                    btnPagar.disabled = true;
+                });
+            });
+
+            {% if requiere_envio %}
+                document.getElementById('envio_si').checked = true;
+                camposEnvio.style.display = 'block';
+            {% endif %}
+        });
+    </script>
+
+{% else %}
+    <p>Tu carrito está vacío.</p>
+{% endif %}
+
 </body>
 </html>
+

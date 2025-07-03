@@ -1,14 +1,14 @@
+<h1>Boleta de Compra</h1>
 
-<h2 style="text-align: center;">Boleta de Compra #{{ compra.id }}</h2>
-<p><strong>Cliente:</strong> {{ compra.cliente.nombre }}</p>
+<p><strong>ID Compra:</strong> {{ compra.id }}</p>
 <p><strong>Fecha:</strong> {{ compra.fecha|date:"d/m/Y H:i" }}</p>
 
-<table width="100%" border="1" cellspacing="0" cellpadding="5">
-    <thead style="background-color: #f0f0f0;">
+<table>
+    <thead>
         <tr>
             <th>Producto</th>
             <th>Cantidad</th>
-            <th>Precio Unitario</th>
+            <th>Precio unitario</th>
             <th>Subtotal</th>
         </tr>
     </thead>
@@ -24,4 +24,25 @@
     </tbody>
 </table>
 
-<h3 style="text-align: right;">Total: ${{ compra.total }}</h3>
+{% if request.session.requiere_envio %}
+    <p><strong>Dirección de envío:</strong> {{ request.session.direccion_envio }}</p>
+
+    <table>
+        <tr>
+            <td class="totales"><strong>Subtotal productos:</strong></td>
+            <td class="totales">${{ subtotal_sin_envio }}</td>
+        </tr>
+        <tr>
+            <td class="totales"><strong>Costo de envío:</strong></td>
+            <td class="totales">${{ costo_envio }}</td>
+        </tr>
+        <tr>
+            <td class="totales"><strong>Total pagado:</strong></td>
+            <td class="totales">${{ compra.total }}</td>
+        </tr>
+    </table>
+{% else %}
+    <h3 class="total-final">Total pagado: ${{ compra.total }}</h3>
+{% endif %}
+
+

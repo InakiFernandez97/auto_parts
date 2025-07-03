@@ -1,32 +1,56 @@
+
 <footer class="footer">
     <div class="footer-container">
-        <div class="footer-column">
-            <h4>Sobre Nosotros</h4>
-            <ul>
-                <li><a href="#">CyberDay</a></li>
-                <li><a href="#">CyberMonday</a></li>
-                <li><a href="#">BlackFriday</a></li>
-                <li><a href="#">AutoParts Mayoristas</a></li>
-                <li><a href="#">Plan de Afiliados</a></li>
-            </ul>
-        </div>
-
+       <!-- Íconos sociales -->
+        <div class="footer-column social-column">
+  <h4 class="social-title">Síguenos</h4>
+  <div class="social-icons">
+    <a href="#"><i class="fab fa-instagram"></i></a>
+    <a href="#"><i class="fab fa-facebook-f"></i></a>
+    <a href="#"><i class="fas fa-envelope"></i></a>
+  </div>
+</div>
+        <!-- Columna: Sobre Nosotros -->
+       <div class="footer-column">
+    <h4>Sobre Nosotros</h4>
+    <ul>
+        <li><a href="{% url 'mostrar_informacion' 'sobre-cyberday' %}">CyberDay</a></li>
+        <li><a href="{% url 'mostrar_informacion' 'sobre-cybermonday' %}">CyberMonday</a></li>
+        <li><a href="{% url 'mostrar_informacion' 'sobre-blackfriday' %}">BlackFriday</a></li>
+        <li><a href="{% url 'mostrar_informacion' 'sobre-mayoristas' %}">AutoParts Mayoristas</a></li>
+        <li><a href="{% url 'mostrar_informacion' 'sobre-tienda' %}">Nuestra Tienda</a></li></ul>
+</div>
+        <!-- Columna: Contáctanos (FUNCIONAL) -->
         <div class="footer-column">
             <h4>Contáctanos</h4>
             <ul>
-                <li><a href="#">Ayuda al cliente</a></li>
-                <li><a href="#">Política de despacho</a></li>
-                <li><a href="#">Bases promociones vigentes</a></li>
-                <li><a href="#">Servicios tienda</a></li>
-                <li><a href="#">Seguimiento</a></li>
-                <li><a href="#">Modos de entrega</a></li>
+                <li><a href="{% url 'mostrar_informacion' 'ayuda-cliente' %}">Ayuda al cliente</a></li>
+                <li><a href="{% url 'mostrar_informacion' 'politica-despacho' %}">Política de despacho</a></li>
+                <li><a href="{% url 'mostrar_informacion' 'bases-promociones' %}">Bases promociones vigentes</a></li>
+                <li><a href="{% url 'mostrar_informacion' 'servicios-tienda' %}">Servicios tienda</a></li>
+                <li><a href="{% url 'mostrar_informacion' 'seguimiento' %}">Seguimiento</a></li>
+                <li><a href="{% url 'mostrar_informacion' 'modos-entrega' %}">Modos de entrega</a></li>
             </ul>
         </div>
 
-        <div class="social-icons">
-            <a href="#"><i class="fab fa-instagram"></i></a>
-            <a href="#"><i class="fab fa-facebook-f"></i></a>
-            <a href="#"><i class="fas fa-envelope"></i></a>
-        </div>
+        
+        <div class="footer-column">
+    <h4>Ubicación</h4>
+    <iframe 
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3330.302003059138!2d-70.6458889!3d-33.4525204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c572fd3d02fb%3A0x663bfef70d9af378!2sTOYOTA%20Repuestos%20Multimak!5e0!3m2!1ses!2scl!4v1688259871230!5m2!1ses!2scl" 
+        width="100%" 
+        height="200" 
+        style="border:0; border-radius: 8px;" 
+        allowfullscreen="" 
+        loading="lazy" 
+        referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
+    <p style="color: #ccc; font-size: 0.9em; margin-top: 8px;">
+  Diez de Julio 711, Santiago Centro
+</p>
+
+</div>
+
+
     </div>
 </footer>

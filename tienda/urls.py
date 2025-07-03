@@ -3,6 +3,8 @@ from . import views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('api/costo-envio/', views.obtener_costo_envio_carrito, name='calcular_costo_envio'),
+
 
     # Usuario normal
     path('registro/', views.registro, name='registro'),
@@ -25,8 +27,10 @@ urlpatterns = [
     path('iniciar_pago_webpay/', views.iniciar_pago_webpay, name='iniciar_pago_webpay'),
     path('webpay/return/', views.webpay_return, name='webpay_return'),
     path('procesar_compra_exitosa/', views.procesar_compra_exitosa, name='procesar_compra_exitosa'),
-    # prueba
-    path('debug_sql/', views.ver_compras_sql_debug),
+    path('informacion/<str:seccion>/', views.mostrar_informacion, name='mostrar_informacion'),
+    path('ver_comunas/', views.ver_comunas_chilexpress, name='ver_comunas'),
+    path('ver_regiones/', views.ver_regiones_disponibles, name='ver_regiones'),
+
 
 
 

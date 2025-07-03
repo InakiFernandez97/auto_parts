@@ -20,7 +20,14 @@ from transbank.common.options import WebpayOptions
 from transbank.common.integration_type import IntegrationType
 from django.conf import settings
 from django.urls import reverse
-
+from django.core.paginator import Paginator
+import requests 
+import json
+from django.http import JsonResponse
+import math
+import re
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 def home(request):
     productos_destacados = Producto.objects.all()[:12]
@@ -35,9 +42,35 @@ def registro(request):
         correo = request.POST.get('correo')
         contrasena = request.POST.get('contrasena')
 
-        if ClienteB2C.objects.filter(correo=correo).exists():
-            return render(request, 'registrousuario.html', {'error': 'El correo ya está registrado'})
+        # Validación de campos vacíos
+        if not all([nombre, apellido, rut, telefono, correo, contrasena]):
+            return render(request, 'registrousuario.html', {'error': 'Todos los campos son obligatorios'})
 
+        # Validación RUT chileno
+        if not validar_rut_chileno(rut):
+            return render(request, 'registrousuario.html', {'error': 'El RUT no es válido'})
+
+        # Validación teléfono chileno
+        if not re.match(r'^(\+569\d{8}|[2-9]\d{7,8})$', telefono):
+            return render(request, 'registrousuario.html', {'error': 'El teléfono debe ser chileno (ej: +56912345678 o fijo)'})
+
+        # Validación correo
+        try:
+            validate_email(correo)
+            if not (correo.endswith('.com') or correo.endswith('.cl')):
+                raise ValidationError("Extensión no válida")
+        except ValidationError:
+            return render(request, 'registrousuario.html', {'error': 'El correo no es válido'})
+
+        # Contraseña
+        if len(contrasena) < 6:
+            return render(request, 'registrousuario.html', {'error': 'La contraseña debe tener al menos 6 caracteres'})
+
+        # Correo ya registrado
+        if ClienteB2C.objects.filter(correo=correo).exists():
+            return render(request, 'tienda/registrousuario.html', {'error': 'El correo ya está registrado'})
+
+        # Guardar usuario
         ClienteB2C.objects.create(
             nombre=nombre,
             apellido=apellido,
@@ -50,6 +83,22 @@ def registro(request):
 
     return render(request, 'tienda/registrousuario.html')
  
+def validar_rut_chileno(rut):
+    rut = rut.replace(".", "").replace("-", "")
+    if len(rut) < 8 or not rut[:-1].isdigit():
+        return False
+    cuerpo = rut[:-1]
+    dv = rut[-1].upper()
+
+    suma = 0
+    multiplo = 2
+    for c in reversed(cuerpo):
+        suma += int(c) * multiplo
+        multiplo = 9 if multiplo == 2 else multiplo - 1
+    resto = suma % 11
+    digito = 'K' if (11 - resto == 10) else str((11 - resto) % 11)
+
+    return dv == digito
 
 def login(request):
     if request.method == 'POST':
@@ -105,13 +154,13 @@ def carrito_cliente(request):
     if 'usuario_id' not in request.session:
         return redirect('logincliente')
 
+    cliente = ClienteB2C.objects.get(id_cliente=request.session['usuario_id'])
     carrito = request.session.get('carrito_b2c', {})
-    productos = Producto.objects.filter(id__in=carrito.keys())
-
     items = []
     total = 0
-    for producto in productos:
-        cantidad = carrito[str(producto.id)]
+
+    for id_producto, cantidad in carrito.items():
+        producto = Producto.objects.get(id=id_producto)
         subtotal = producto.precio * cantidad
         total += subtotal
         items.append({
@@ -120,10 +169,24 @@ def carrito_cliente(request):
             'subtotal': subtotal
         })
 
+    comunas_disponibles = obtener_codigos_comunas_chilexpress()
+    requiere_envio = request.session.get('requiere_envio', False)
+    costo_envio = 0
+
+    # ✅ Aquí calculamos costo si hay comuna guardada en sesión
+    if requiere_envio and request.session.get('comuna_envio'):
+        comuna_codigo = request.session['comuna_envio']
+        costo_envio = obtener_costo_envio_chilexpress(comuna_codigo)
+
     return render(request, 'tienda/carrito_cliente.html', {
         'items': items,
-        'total': total
+        'total': total,
+        'cliente': cliente,
+        'comunas': comunas_disponibles,
+        'costo_envio': costo_envio,
+        'requiere_envio': requiere_envio
     })
+
 
 
 def catalogo_b2c(request):
@@ -145,8 +208,13 @@ def catalogo_b2c(request):
     categorias = Producto.objects.values_list('categoria', flat=True).distinct()
     marcas = Producto.objects.values_list('marca', flat=True).distinct()
 
+    paginator = Paginator(productos, 18)  # 18 productos por página (6 columnas x 3 filas)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'productos': productos,
+        'productos': page_obj,
+        'page_obj': page_obj,
         'categorias': categorias,
         'marcas': marcas,
         'categoria_seleccionada': categoria,
@@ -292,13 +360,20 @@ def procesar_compra_cliente(request):
     return redirect('perfil_cliente')
 
 def descargar_boleta(request, id):
+    from .models import CompraCliente, DetalleCompraCliente  # por si no estaban importados
     compra = get_object_or_404(CompraCliente, id=id)
     detalles = DetalleCompraCliente.objects.filter(compra=compra)
+
+    # Obtener costo de envío desde sesión (si existe)
+    costo_envio = request.session.get('costo_envio', 0)
+    subtotal_sin_envio = compra.total - costo_envio if costo_envio else compra.total
 
     template_path = 'tienda/boleta_pdf.html'
     context = {
         'compra': compra,
-        'detalles': detalles
+        'detalles': detalles,
+        'subtotal_sin_envio': subtotal_sin_envio,
+        'costo_envio': costo_envio
     }
 
     response = HttpResponse(content_type='application/pdf')
@@ -318,6 +393,10 @@ def iniciar_pago_webpay(request):
     if 'usuario_id' not in request.session:
         return redirect('logincliente')
 
+    requiere_envio = request.POST.get('requiere_envio') == 'si'
+    comuna_codigo = request.POST.get('comuna') if requiere_envio else None
+    direccion = request.POST.get('direccion') if requiere_envio else None
+
     carrito = request.session.get('carrito_b2c', {})
     productos = Producto.objects.filter(id__in=carrito.keys())
 
@@ -326,25 +405,38 @@ def iniciar_pago_webpay(request):
         cantidad = carrito[str(producto.id)]
         total += producto.precio * cantidad
 
-    options = WebpayOptions(
-        commerce_code=settings.TRANSBANK_COMMERCE_CODE,
-        api_key=settings.TRANSBANK_API_KEY,
-        integration_type=IntegrationType.TEST
-    )
+    # Aquí se agrega el cálculo simulado del costo de envío
+    costo_envio = 0
+    if requiere_envio:
+        peso_total = sum([(producto.peso or 0) * carrito[str(producto.id)] for producto in productos])
+        costo_envio = 5990
+        if peso_total > 1:
+            kilos_extras = math.ceil(peso_total - 1)
+            costo_envio += int(round(5990 * 0.05 * kilos_extras))
 
+    total_final = total + costo_envio
+
+    # Guardar en sesión para usar en la boleta
+    request.session['requiere_envio'] = requiere_envio
+    request.session['comuna_envio'] = comuna_codigo
+    request.session['direccion_envio'] = direccion
+    request.session['costo_envio'] = costo_envio
+    request.session['total_final'] = total_final
+
+    # Crear transacción con Webpay
     transaction = Transaction()
     response = transaction.create(
-        buy_order=str(request.session['usuario_id']) + '-orden',
+        buy_order=f"orden-{request.session['usuario_id']}",
         session_id=str(request.session['usuario_id']),
-        amount=total,
+        amount=total_final,  # ✅ aquí se envía el total CON envío incluido
         return_url=request.build_absolute_uri(reverse('webpay_return'))
     )
 
     return render(request, 'tienda/redireccion_webpay.html', {
         'webpay_url': response.url,
         'token': response.token
-
     })
+
 
 @csrf_exempt
 def webpay_return(request):
@@ -429,25 +521,154 @@ def categoria(request, categoria_nombre):
         'productos': productos_filtrados,
         'categoria': categoria_nombre
     })
-""" prueba """
-from django.http import HttpResponse
-from django.db import connection
-
-def ver_compras_sql_debug(request):
-    if 'usuario_id' not in request.session:
-        return HttpResponse("No logueado")
-
-    cliente_id = request.session['usuario_id']
-    compras = CompraCliente.objects.raw(f"SELECT * FROM compracliente WHERE id_cliente = {cliente_id}")
-
-    resultado = "<h1>Compras desde SQL directo:</h1><ul>"
-    for compra in compras:
-        resultado += f"<li>Compra #{compra.id} - Total: ${compra.total}</li>"
-    resultado += "</ul>"
-
-    return HttpResponse(resultado)
 
 
+def mostrar_informacion(request, seccion):
+    contenido_info = {
+        "ayuda-cliente": {
+            "titulo": "Ayuda al Cliente",
+            "contenido": """
+            <p>¿Tienes dudas? Aquí tienes algunas formas en que podemos ayudarte:</p>
+            <ul>
+                <li>Revisa nuestras <strong>Preguntas Frecuentes</strong>.</li>
+                <li>Contáctanos al correo: <a href="mailto:contacto@autoparts.cl">contacto@autoparts.cl</a></li>
+                <li>Llámamos al <strong>+56 9 1234 5678</strong></li>
+                <li>Horario de atención: Lunes a Viernes de 09:00 a 18:00 hrs</li>
+            </ul>
+            """
+        },
+        "politica-despacho": {
+            "titulo": "Política de Despacho",
+            "contenido": """
+            <p>Nos comprometemos a entregar tus productos de forma rápida y segura:</p>
+            <ul>
+                <li>Despachamos en un plazo de 24 a 72 horas hábiles.</li>
+                <li>Trabajamos con <strong>Chilexpress</strong> y <strong>Bluexpress</strong>.</li>
+                <li>El seguimiento se envía automáticamente al correo tras el pago.</li>
+                <li>El costo de envío se calcula en el checkout, según tu región.</li>
+            </ul>
+            """
+        },
+        "bases-promociones": {
+            "titulo": "Bases Promociones Vigentes",
+            "contenido": """
+            <p>Consulta las condiciones de nuestras campañas promocionales:</p>
+            <ul>
+                <li>Las promociones no son acumulables con otros descuentos.</li>
+                <li>Aplican solo a productos seleccionados y hasta agotar stock.</li>
+                <li>Fechas de validez: desde el 01/07/2025 hasta el 15/07/2025.</li>
+                <li>Promociones sujetas a cambios sin previo aviso.</li>
+            </ul>
+            """
+        },
+        "servicios-tienda": {
+            "titulo": "Servicios en Tienda",
+            "contenido": """
+            <p>En nuestras sucursales Autoparts puedes acceder a los siguientes servicios:</p>
+            <ul>
+                <li>Instalación de baterías y ampolletas.</li>
+                <li>Revisión gratuita de frenos y aceite.</li>
+                <li>Recomendación de repuestos compatibles según tu vehículo.</li>
+                <li>Asesoría presencial por parte de nuestros técnicos.</li>
+            </ul>
+            """
+        },
+        "seguimiento": {
+            "titulo": "Seguimiento de Pedido",
+            "contenido": """
+            <p>Puedes hacer seguimiento de tu pedido de estas formas:</p>
+            <ul>
+                <li>Ve al historial en tu cuenta si estás registrado.</li>
+                <li>Consulta el código de seguimiento que te enviamos por correo.</li>
+                <li>O contáctanos con tu número de orden a <a href="mailto:despachos@autoparts.cl">despachos@autoparts.cl</a></li>
+            </ul>
+            """
+        },
+        "modos-entrega": {
+            "titulo": "Modos de Entrega",
+            "contenido": """
+            <p>Contamos con diferentes opciones de entrega para tu comodidad:</p>
+            <ul>
+                <li><strong>Retiro en tienda:</strong> disponible en 1 hora hábil posterior a la compra.</li>
+                <li><strong>Envío a domicilio:</strong> entregas a todo Chile vía Chilexpress o Bluexpress.</li>
+                <li>Elige la opción al momento de pagar y revisa costos y tiempos estimados.</li>
+            </ul>
+            """
+        },
+        "sobre-cyberday": {
+    "titulo": "CyberDay",
+    "contenido": """
+    <p><strong>CyberDay</strong> es uno de los eventos de descuentos más importantes del año en Autoparts. Durante estos días, podrás acceder a ofertas únicas en repuestos, lubricantes, accesorios y mucho más.</p>
+    <ul>
+        <li>Descuentos de hasta un 50% en productos seleccionados.</li>
+        <li>Ofertas válidas solo por 72 horas o hasta agotar stock.</li>
+        <li>Promociones exclusivas para compras online.</li>
+        <li>Medios de pago habilitados: Webpay, Mercado Pago y transferencias.</li>
+    </ul>
+    <p>¡Prepárate y aprovecha las mejores oportunidades para mantener tu vehículo en óptimas condiciones!</p>
+    """
+},
+"sobre-cybermonday": {
+    "titulo": "CyberMonday",
+    "contenido": """
+    <p><strong>CyberMonday</strong> en Autoparts es el evento ideal para quienes buscan equipar su auto con productos de calidad a precios rebajados.</p>
+    <ul>
+        <li>Envíos gratis en compras superiores a $50.000.</li>
+        <li>Acceso anticipado para clientes registrados.</li>
+        <li>Ofertas flash renovadas cada 12 horas.</li>
+        <li>Stock garantizado y reposición constante durante el evento.</li>
+    </ul>
+    <p>No pierdas la oportunidad de renovar tus repuestos y accesorios con grandes descuentos.</p>
+    """
+},
+"sobre-blackfriday": {
+    "titulo": "Black Friday",
+    "contenido": """
+    <p>En <strong>Black Friday</strong>, Autoparts lanza sus precios más bajos del año. Es el momento perfecto para adquirir todo lo que necesitas para tu auto, antes de las vacaciones o el verano.</p>
+    <ul>
+        <li>Combos especiales y kits de mantenimiento con descuentos extra.</li>
+        <li>Ofertas exclusivas en productos premium: Philips, Bosch, Valeo y más.</li>
+        <li>Precios válidos solo por 48 horas.</li>
+        <li>Todos los pedidos incluyen seguimiento y embalaje seguro.</li>
+    </ul>
+    <p>¡Conecta tu pasión por los autos con la oportunidad perfecta de ahorrar!</p>
+    """
+},
+"sobre-mayoristas": {
+    "titulo": "AutoParts Mayoristas",
+    "contenido": """
+    <p>En Autoparts, ofrecemos atención especializada para <strong>mayoristas, talleres y flotas</strong> que buscan soluciones confiables y precios competitivos.</p>
+    <ul>
+        <li>Catálogo exclusivo con productos técnicos y de alta rotación.</li>
+        <li>Asesoría personalizada para compras por volumen.</li>
+        <li>Opciones de pago flexibles y descuentos por cantidad.</li>
+        <li>Facturación directa, despacho programado y soporte postventa.</li>
+    </ul>
+    <p>Contáctanos si eres empresa, mecánico independiente o distribuidor y accede a beneficios únicos.</p>
+    """
+},
+"sobre-tienda": {
+    "titulo": "Nuestra Tienda",
+    "contenido": """
+    <p>Visítanos en nuestra sucursal de <strong>Diez de Julio 711, Santiago Centro</strong>, donde encontrarás repuestos, lubricantes, baterías y más.</p>
+    <ul>
+        <li>Asesoría personalizada por expertos.</li>
+        <li>Instalación básica gratuita de baterías.</li>
+        <li>Horario: Lunes a Sábado de 9:30 a 18:30 hrs.</li>
+    </ul>
+    <p>Te esperamos con las mejores marcas del mercado y atención confiable.</p>
+    """
+}
+
+
+    }
+
+    datos = contenido_info.get(seccion, {
+        "titulo": "Información no disponible",
+        "contenido": "La sección que estás buscando no fue encontrada."
+    })
+
+    return render(request, 'tienda/informacion.html', datos)
 """ Mayorista """
 def registro_mayorista(request):
     if request.method == 'POST':
@@ -686,8 +907,123 @@ def logout_mayorista(request):
 def homemayorista(request):
     return render(request, 'tienda/homemayorista.html')
 
+""" vistas api chileexpress """
+from django.http import JsonResponse, HttpResponse
+
+def ver_regiones_disponibles(request):
+    url = "http://testservices.wschilexpress.com/georeference/api/v1/regions"
+    headers = {
+        "Ocp-Apim-Subscription-Key": "782c134e544d425ebee52f49da58ed44"
+    }
+
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        try:
+            regiones = response.json()
+            return JsonResponse(regiones, safe=False)
+        except Exception as e:
+            return HttpResponse(f"Error al parsear JSON: {e}")
+    else:
+        return HttpResponse(f"Error HTTP: {response.status_code} - {response.text}")
+
+
+def obtener_codigos_comunas_chilexpress():
+    url = "http://testservices.wschilexpress.com/georeference/api/v1.0/coverage-areas?RegionCode=RM&type=0"
+    headers = {
+        "Ocp-Apim-Subscription-Key": "782c134e544d425ebee52f49da58ed44"
+    }
+
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        comunas_raw = data.get("coverageAreas", [])
+
+        # Filtrar y eliminar duplicados por countyName + regionName (protegido con .get)
+        comunas_unicas = {}
+        for c in comunas_raw:
+            nombre = c.get('countyName', 'Desconocido')
+            region = c.get('regionName', 'Desconocido')
+            key = (nombre, region)
+
+            if key not in comunas_unicas:
+                comunas_unicas[key] = c
+
+        comunas = sorted(comunas_unicas.values(), key=lambda x: x.get('countyName', ''))
+        print("✅ Comunas únicas (seguras):", len(comunas))
+        return comunas
+
+    print("❌ Error al obtener comunas:", response.status_code, response.text)
+    return []
+
+
+def obtener_costo_envio_chilexpress(comuna_destino_codigo, peso_kg=1):
+    url = "http://testservices.wschilexpress.com/rating/api/v1/rates/courier"
+    headers = {
+        "Ocp-Apim-Subscription-Key": "8bceb0c7f1e4448a9980a5047447285e",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "originCountyCode": "QN",  # Santiago
+        "destinationCountyCode": comuna_destino_codigo,
+        "package": {
+            "weight": peso_kg,
+            "height": 10,
+            "width": 10,
+            "length": 10
+        },
+        "productType": 3,
+        "deliveryTime": 1
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        data = response.json()
+        if isinstance(data, list) and 'totalValue' in data[0]:
+            return int(data[0]['totalValue'])
+    return 0
 
 
 
 
+def ver_comunas_chilexpress(request):
+    comunas = obtener_codigos_comunas_chilexpress()
+    html = "<h2>Listado de Comunas con cobertura (tipo=A)</h2><ul>"
+    for c in comunas:
+        html += f"<li>{c['countyName']} ({c['countyCode']}) - {c['regionName']}</li>"
+    html += "</ul>"
+    return HttpResponse(html)
 
+@csrf_exempt
+def obtener_costo_envio_carrito(request):
+    try:
+        body = json.loads(request.body)
+        comuna_codigo = body.get('comuna')
+
+        if not comuna_codigo:
+            return JsonResponse({'error': 'Comuna no especificada'}, status=400)
+
+        carrito = request.session.get('carrito_b2c', {})
+        if not carrito:
+            return JsonResponse({'error': 'Carrito vacío'}, status=400)
+
+        productos = Producto.objects.filter(id__in=carrito.keys())
+
+        peso_total = 0.0
+        for producto in productos:
+            cantidad = carrito[str(producto.id)]
+            peso_total += (float(producto.peso) or 0) * cantidad
+
+        # 🔢 Reglas
+        costo_base = 5990
+        if peso_total <= 1:
+            costo_envio = costo_base
+        else:
+            kilos_extras = math.ceil(peso_total - 1)
+            aumento = costo_base * 0.05 * kilos_extras
+            costo_envio = int(round(costo_base + aumento))
+
+        return JsonResponse({'costo_envio': costo_envio})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

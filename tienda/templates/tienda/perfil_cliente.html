@@ -6,6 +6,39 @@
     <title>Perfil del Cliente</title>
     <link rel="stylesheet" href="{% static 'css/perfil_cliente.css' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .info-container {
+            padding: 40px 20px;
+            max-width: 900px;
+            margin: auto;
+            font-size: 1.1em;
+            color: #444;
+            line-height: 1.7;
+        }
+        header.simple-header {
+            background-color: #111;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header.simple-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        header.simple-header a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            background-color: #ff9800;
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
+        header.simple-header a:hover {
+            background-color: #e68900;
+        }
+    </style>
 </head>
 <body>
 
@@ -13,8 +46,8 @@
     <div class="container d-flex justify-content-between align-items-center">
         <h2 class="h5 mb-0">AUTOPARTS - Perfil del Cliente</h2>
         <div>
-            <a href="{% url 'home' %}" class="btn btn-naranja-outline btn-sm me-2">🏠 Volver al inicio</a>
-            <a href="{% url 'logout' %}" class="btn btn-naranja-outline btn-sm">Cerrar sesión</a>
+            <a href="{% url 'home' %}">← Volver al inicio</a>
+            <a href="{% url 'logout' %}">Cerrar sesión</a>
         </div>
     </div>
 </header>

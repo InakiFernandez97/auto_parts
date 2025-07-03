@@ -15,6 +15,10 @@ class Producto(models.Model):
     promocion = models.BooleanField(default=False)
     imagen = models.CharField(max_length=255, blank=True, null=True)
     stock = models.PositiveIntegerField(default=0)
+    peso = models.DecimalField(max_digits=50, decimal_places=2, default=1.0)
+    alto = models.DecimalField(max_digits=50, decimal_places=2, default=10.0)
+    ancho = models.DecimalField(max_digits=50, decimal_places=2, default=10.0)
+    largo = models.DecimalField(max_digits=50, decimal_places=2, default=10.0)
 
     def __str__(self):
         return self.nombre

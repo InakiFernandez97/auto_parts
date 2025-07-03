@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Catálogo - B2C</title>
     <link rel="stylesheet" href="{% static 'css/catalogo_b2c.css' %}">
+    <link rel="stylesheet" href="{% static 'css/stilo.css' %}">
 </head>
 <body>
 <header class="topbar">
@@ -42,11 +43,12 @@
                     </label>
                 {% endfor %}
 
+                <input type="hidden" name="q" value="{{ query }}">
+                <input type="hidden" name="page" value="{{ page_obj.number }}">
 
                 <div style="margin-top: 10px;">
                     <button type="submit" class="filtrar-btn">Filtrar</button>
                     <a href="{% url 'catalogo_b2c' %}" class="limpiar-btn">Limpiar filtros</a>
-
                 </div>
             </form>
         </div>
@@ -68,8 +70,34 @@
             {% empty %}
                 <p>No hay productos disponibles.</p>
             {% endfor %}
-        </div>
+        </div> <!-- Fin .product-list -->
+    </div> <!-- Fin .catalog-layout -->
+
+    <!-- PAGINACIÓN CORREGIDA -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="paginacion">
+        <ul>
+            {% if page_obj.has_previous %}
+                <li><a href="?{% if query %}q={{ query }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}{% for m in marcas_seleccionadas %}marca={{ m }}&{% endfor %}page={{ page_obj.previous_page_number }}">«</a></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="activo"><span>{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li><a href="?{% if query %}q={{ query }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}{% for m in marcas_seleccionadas %}marca={{ m }}&{% endfor %}page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li><a href="?{% if query %}q={{ query }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}{% for m in marcas_seleccionadas %}marca={{ m }}&{% endfor %}page={{ page_obj.next_page_number }}">»</a></li>
+            {% endif %}
+        </ul>
     </div>
+    {% endif %}
+
+    {% include 'tienda/base/footer.html' %}
 </main>
 </body>
 </html>
+
